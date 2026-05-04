@@ -14,12 +14,10 @@ logger = setup_logger(__name__)
 
 # ========== VALIDATE DEPLOYMENT CONFIG ==========
 try:
-    # Validate API key is configured
-    _ = config.get_groq_api_key()
-except ValueError as e:
-    logger.error(f"Configuration error: {str(e)}")
-    st.error(f"❌ Configuration Error: {str(e)}")
-    st.stop()
+    api_key = config.get_groq_api_key()
+except Exception:
+    st.warning("⚠️ API key not configured. AI features disabled.")
+    api_key = None
 
 st.set_page_config(
     page_title=f"{config.APP_NAME} - {config.APP_DESCRIPTION}",
