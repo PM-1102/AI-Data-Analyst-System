@@ -1,0 +1,36 @@
+[theme]
+primaryColor = "#00c6ff"
+backgroundColor = "#0a0d14"
+secondaryBackgroundColor = "#1a2235"
+textColor = "#e0e6ed"
+font = "sans serif"
+base = "dark"
+
+[client]
+showErrorDetails = false
+toolbarMode = "minimal"
+
+[logger]
+level = "info"
+messageFormat = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+[server]
+headless = true
+runOnSave = false
+port = 8501
+baseUrlPath = ""
+enableCORS = true
+enableXsrfProtection = true
+maxUploadSize = 200
+
+[browser]
+gatherUsageStats = false
+serverAddress = "localhost"
+
+# Deployment settings
+[client]
+showErrorDetails = false
+toolbarMode = "minimal"
+
+[deploymentManager]
+# Configuration for cloud deployment
