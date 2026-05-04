@@ -1,16 +1,17 @@
 import os
+import streamlit as st
 from groq import Groq
-from dotenv import load_dotenv
 from utils.config import Config
 from utils.logger import setup_logger
-
-load_dotenv()
 
 logger = setup_logger(__name__)
 
 # Initialize Groq client with secure API key handling
 try:
-    api_key = Config.get_groq_api_key()
+    # Use st.secrets first (production), then environment variable (development)
+    api_key = st.secrets.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
+    if not api_key:
+        raise ValueError("GROQ_API_KEY not configured in secrets or environment")
     client = Groq(api_key=api_key)
     logger.info("Groq client initialized successfully")
 except Exception as e:
