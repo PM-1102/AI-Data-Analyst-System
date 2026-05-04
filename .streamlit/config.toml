@@ -26,11 +26,3 @@ maxUploadSize = 200
 [browser]
 gatherUsageStats = false
 serverAddress = "localhost"
-
-# Deployment settings
-[client]
-showErrorDetails = false
-toolbarMode = "minimal"
-
-[deploymentManager]
-# Configuration for cloud deployment
