@@ -34,8 +34,8 @@ def render():
             st.success(f"✅ File loaded successfully ({file_extension} format)")
 
             # Store raw df temporarily for display
-            st.session_state.raw_df = df
-
+            st.session_state.df = df
+            st.session_state.clean_df = df  # 🔥 fallback so app never breaks
             st.divider()
 
             # ========== RAW DATA INFO ==========
