@@ -85,7 +85,3 @@ An error occurred while processing your request.
 
 Recommendation:
 Please try again later."""
-An error occurred: {type(e).__name__}
-
-Recommendation:
-Please try again. If problem persists, check API key and Groq service status."""
