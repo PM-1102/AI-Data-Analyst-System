@@ -6,6 +6,13 @@ import warnings
 warnings.filterwarnings("ignore")
 
 import streamlit as st
+
+# ========== FIRST STREAMLIT CALL (MUST BE HERE) ==========
+st.set_page_config(
+    page_title="DataSense AI",
+    layout="wide"
+)
+
 import time
 from tabs import upload, clean, kpi, dashboard, chat
 from utils.session import SessionManager
@@ -19,52 +26,19 @@ def main():
     config = get_config()
     logger = setup_logger(__name__)
 
-    # ========== VALIDATE DEPLOYMENT CONFIG ==========
-    try:
-        api_key = config.get_groq_api_key()
-    except Exception:
-        st.warning("⚠️ API key not configured. AI features disabled.")
-        api_key = None
-
-    st.set_page_config(
-        page_title=f"{config.APP_NAME} - {config.APP_DESCRIPTION}",
-        layout=config.PAGE_LAYOUT,
-        initial_sidebar_state=config.SIDEBAR_INITIAL_STATE,
-        menu_items=None
-    )
-
     # Enable error details for debugging
     st.set_option('client.showErrorDetails', True)
 
-    # ========== CSS Loading ==========
-    def load_css():
-        """Load CSS with fallback handling"""
+    # ========== CSS Loading (Load only once) ==========
+    if "css_loaded" not in st.session_state:
         try:
-            # Try multiple possible paths
-            css_paths = [
-                "main.css",
-                "./main.css",
-                "app/main.css"
-            ]
-            
-            css_content = None
-            for path in css_paths:
-                try:
-                    with open(path, encoding="utf-8") as f:
-                        css_content = f.read()
-                        logger.info(f"CSS loaded from: {path}")
-                        break
-                except FileNotFoundError:
-                    continue
-            
-            if css_content:
-                st.markdown(f"<style>{css_content}</style>", unsafe_allow_html=True)
-            else:
-                logger.warning("CSS file not found in any expected location")
+            with open("main.css", encoding="utf-8") as f:
+                st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+            st.session_state.css_loaded = True
+        except FileNotFoundError:
+            pass
         except Exception as e:
             logger.error(f"Error loading CSS: {str(e)}")
-
-    load_css()
 
     # ========== SESSION Initialization ==========
     SessionManager.init()
