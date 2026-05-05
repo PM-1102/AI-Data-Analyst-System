@@ -76,8 +76,7 @@ def render():
                     st.session_state.file_uploaded = True
 
                 st.rerun()
-
-                # Success message
+                return
                 st.markdown("""
                 <div class="metric-card" style="background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.05)); border: 1px solid rgba(16,185,129,0.3);">
                     <h3 style="color: #10b981; margin-top: 0;">✅ Data Cleaned Successfully!</h3>
