@@ -5,6 +5,7 @@ plotly==5.20.0
 python-dotenv==1.0.1
 groq==0.4.2
 openpyxl==3.1.2
+httpx==0.28.1
 
 # critical fixes
 setuptools>=70.0.0
