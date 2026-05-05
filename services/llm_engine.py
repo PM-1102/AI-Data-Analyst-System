@@ -1,73 +1,29 @@
-import os
-import streamlit as st
 from groq import Groq
-from utils.config import Config
+import streamlit as st
+import os
 from utils.logger import setup_logger
+from utils.config import Config
 
 logger = setup_logger(__name__)
 
-client = None  # ✅ always define globally
+# Initialize Groq client with API key from Streamlit secrets
+client = None
 
-# Initialize Groq client safely with detailed logging
-def initialize_groq_client():
-    """Initialize Groq client with comprehensive error handling"""
-    global client
+try:
+    api_key = st.secrets.get("GROQ_API_KEY")
     
-    try:
-        # Try multiple ways to get API key
-        api_key = None
-        
-        # Method 1: Try st.secrets (works in Streamlit Cloud)
-        try:
-            if hasattr(st, 'secrets') and st.secrets:
-                api_key = st.secrets.get("GROQ_API_KEY")
-                if api_key:
-                    logger.info("✅ API key loaded from Streamlit secrets")
-        except Exception as e:
-            logger.debug(f"Could not access st.secrets: {e}")
-        
-        # Method 2: Try environment variable (works in local/Docker)
-        if not api_key:
-            api_key = os.getenv("GROQ_API_KEY")
-            if api_key:
-                logger.info("✅ API key loaded from environment variable")
-        
-        # If we found an API key, initialize Groq
-        if api_key:
-            logger.info("🔑 Initializing Groq client with API key...")
-            client = Groq(api_key=api_key)
-            logger.info("✅ Groq client initialized successfully")
-            return client
-        else:
-            logger.warning("⚠️ GROQ_API_KEY not found in secrets or environment")
-            return None
-        
-    except TypeError as te:
-        logger.error(f"❌ Groq initialization TypeError (likely invalid parameter): {str(te)}")
-        return None
-    except ValueError as ve:
-        logger.error(f"❌ Groq initialization ValueError (likely API key issue): {str(ve)}")
-        return None
-    except Exception as e:
-        logger.error(f"❌ Groq initialization failed: {type(e).__name__}: {str(e)}")
-        return None
-
-# Initialize on module load
-client = initialize_groq_client()
-
-
-def ensure_groq_client():
-    """Ensure Groq client is initialized, retry if needed"""
-    global client
+    # DEBUG: Show if API key is found
+    st.write("DEBUG: API KEY FOUND:", bool(api_key))
     
-    # If client is already initialized, return it
-    if client:
-        return client
-    
-    # Try to initialize again (st.secrets might be available now)
-    logger.info("🔄 Retrying Groq client initialization...")
-    client = initialize_groq_client()
-    return client
+    if api_key:
+        client = Groq(api_key=api_key)
+        logger.info("✅ Groq client initialized with Streamlit secrets API key")
+    else:
+        logger.warning("⚠️ GROQ_API_KEY not found in Streamlit secrets")
+        
+except Exception as e:
+    logger.error(f"❌ Error initializing Groq client: {type(e).__name__}: {str(e)}")
+    client = None
 
 
 def generate_ai_response(user_query, df_summary, filtered_data_preview):
@@ -75,22 +31,15 @@ def generate_ai_response(user_query, df_summary, filtered_data_preview):
     Generate AI response using Groq with comprehensive error handling
     """
 
-    # ✅ Ensure client is initialized (retry if first attempt failed)
-    groq_client = ensure_groq_client()
-    
-    if not groq_client:
-        logger.warning("❌ Groq client not available - returning fallback response")
+    if not client:
         return """Answer:
-🔐 AI service requires API key configuration.
+AI service is currently unavailable.
 
 Insight:
-The system couldn't initialize the AI engine. This usually means:
-1. GROQ_API_KEY is not set in Streamlit secrets
-2. Or there was an initialization error
+The system could not connect to the AI engine.
 
 Recommendation:
-For Streamlit Cloud: Add GROQ_API_KEY to your Streamlit secrets.
-For local development: Set GROQ_API_KEY in your .env file."""
+Check API key configuration or try again later."""
 
     prompt = f"""You are a strict Data Analyst. Your ONLY job is to analyze provided data.
 
@@ -132,7 +81,7 @@ Recommendation:
 
     try:
         logger.info(f"🚀 Sending query to Groq: {user_query[:50]}...")
-        response = groq_client.chat.completions.create(
+        response = client.chat.completions.create(
             model=Config.LLM_MODEL,
             messages=[{"role": "user", "content": prompt}],
             temperature=Config.LLM_TEMPERATURE,

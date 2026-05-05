@@ -1,53 +1,12 @@
-"""
-Streamlit entry point for DataSense AI - AI Data Analyst System
-This file is required for Streamlit Cloud deployment
-"""
-
 import sys
 import os
 
-# Ensure the project root is in the Python path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# Import and run the app
+from app import main
+
 if __name__ == "__main__":
-    import warnings
-    warnings.filterwarnings("ignore")
-
-    import streamlit as st
-    from tabs import upload, clean, kpi, dashboard, chat
-    from utils.session import SessionManager
-    from utils.config import get_config
-    from utils.logger import setup_logger
-
-    # Initialize configuration
-    config = get_config()
-    logger = setup_logger(__name__)
-
-    # ========== VALIDATE DEPLOYMENT CONFIG ==========
-    try:
-        api_key = config.get_groq_api_key()
-    except Exception:
-        st.warning("⚠️ API key not configured. AI features disabled.")
-        api_key = None
-
-    st.set_page_config(
-        page_title=f"{config.APP_NAME} - {config.APP_DESCRIPTION}",
-        layout=config.PAGE_LAYOUT,
-        initial_sidebar_state=config.SIDEBAR_INITIAL_STATE,
-        menu_items=None
-    )
-
-    # Enable error details for debugging
-    st.set_option('client.showErrorDetails', True)
-
-    # ========== CSS Loading ==========
-    def load_css():
-        """Load CSS with fallback handling"""
-        try:
-            css_paths = ["main.css", "./main.css", "app/main.css"]
-            css_content = None
-            for path in css_paths:
+    main()
                 try:
                     with open(path, encoding="utf-8") as f:
                         css_content = f.read()
