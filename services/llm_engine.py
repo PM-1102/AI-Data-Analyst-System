@@ -14,32 +14,60 @@ def initialize_groq_client():
     global client
     
     try:
-        # Get API key from secrets or environment
-        api_key = st.secrets.get("GROQ_API_KEY") if hasattr(st, 'secrets') else None
+        # Try multiple ways to get API key
+        api_key = None
+        
+        # Method 1: Try st.secrets (works in Streamlit Cloud)
+        try:
+            if hasattr(st, 'secrets') and st.secrets:
+                api_key = st.secrets.get("GROQ_API_KEY")
+                if api_key:
+                    logger.info("✅ API key loaded from Streamlit secrets")
+        except Exception as e:
+            logger.debug(f"Could not access st.secrets: {e}")
+        
+        # Method 2: Try environment variable (works in local/Docker)
         if not api_key:
             api_key = os.getenv("GROQ_API_KEY")
+            if api_key:
+                logger.info("✅ API key loaded from environment variable")
         
-        if not api_key:
-            logger.warning("GROQ_API_KEY not configured - AI features will be disabled")
+        # If we found an API key, initialize Groq
+        if api_key:
+            logger.info("🔑 Initializing Groq client with API key...")
+            client = Groq(api_key=api_key)
+            logger.info("✅ Groq client initialized successfully")
+            return client
+        else:
+            logger.warning("⚠️ GROQ_API_KEY not found in secrets or environment")
             return None
         
-        # Initialize with minimal parameters only
-        client = Groq(api_key=api_key)
-        logger.info("✅ Groq client initialized successfully")
-        return client
-        
     except TypeError as te:
-        logger.error(f"Groq initialization TypeError (likely invalid parameter): {str(te)}")
+        logger.error(f"❌ Groq initialization TypeError (likely invalid parameter): {str(te)}")
         return None
     except ValueError as ve:
-        logger.error(f"Groq initialization ValueError (likely API key issue): {str(ve)}")
+        logger.error(f"❌ Groq initialization ValueError (likely API key issue): {str(ve)}")
         return None
     except Exception as e:
-        logger.error(f"Groq initialization failed: {type(e).__name__}: {str(e)}")
+        logger.error(f"❌ Groq initialization failed: {type(e).__name__}: {str(e)}")
         return None
 
 # Initialize on module load
 client = initialize_groq_client()
+
+
+def ensure_groq_client():
+    """Ensure Groq client is initialized, retry if needed"""
+    global client
+    
+    # If client is already initialized, return it
+    if client:
+        return client
+    
+    # Try to initialize again (st.secrets might be available now)
+    logger.info("🔄 Retrying Groq client initialization...")
+    client = initialize_groq_client()
+    return client
 
 
 def generate_ai_response(user_query, df_summary, filtered_data_preview):
@@ -47,9 +75,11 @@ def generate_ai_response(user_query, df_summary, filtered_data_preview):
     Generate AI response using Groq with comprehensive error handling
     """
 
-    # ✅ Check if client is available
-    if not client:
-        logger.warning("Groq client not available - returning fallback response")
+    # ✅ Ensure client is initialized (retry if first attempt failed)
+    groq_client = ensure_groq_client()
+    
+    if not groq_client:
+        logger.warning("❌ Groq client not available - returning fallback response")
         return """Answer:
 🔐 AI service requires API key configuration.
 
@@ -101,8 +131,8 @@ Recommendation:
 """
 
     try:
-        logger.info(f"Sending query to Groq: {user_query[:50]}...")
-        response = client.chat.completions.create(
+        logger.info(f"🚀 Sending query to Groq: {user_query[:50]}...")
+        response = groq_client.chat.completions.create(
             model=Config.LLM_MODEL,
             messages=[{"role": "user", "content": prompt}],
             temperature=Config.LLM_TEMPERATURE,
