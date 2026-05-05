@@ -26,6 +26,9 @@ st.set_page_config(
     menu_items=None
 )
 
+# Enable error details for debugging
+st.set_option('client.showErrorDetails', True)
+
 # ========== CSS Loading ==========
 def load_css():
     """Load CSS with fallback handling"""

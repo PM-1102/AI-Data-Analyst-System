@@ -1,6 +1,7 @@
 import streamlit as st
 import plotly.express as px
 import pandas as pd
+from utils.session import get_safe_df
 
 
 def render():
@@ -16,14 +17,11 @@ def render():
     st.divider()
 
     # Check data availability
-    if st.session_state.clean_df is None:
-        st.error("❌ No data found!")
-        st.info("👉 **Step 1**: Go to 'Upload' tab and select your file")
-        st.info("👉 **Step 2**: Click 'Clean & Prepare Data' button")
-        st.info("👉 **Step 3**: Come back here to see your KPIs")
-        return
-
-    df = st.session_state.clean_df
+    df = get_safe_df()
+    
+    if df is None:
+        st.error("❌ No data available - Please upload data first")
+        st.stop()
 
     # Get numeric and categorical columns
     numeric_cols = df.select_dtypes(include=['number']).columns.tolist()

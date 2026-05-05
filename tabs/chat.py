@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from utils.session import SessionManager, get_clean_df
+from utils.session import SessionManager, get_safe_df
 from utils.context_builder import build_data_context
 from services.llm_engine import generate_ai_response
 from services.query_engine import QueryEngine
@@ -56,18 +56,18 @@ def render():
 
     st.divider()
 
-    df = get_clean_df()
+    df = get_safe_df()
 
     # 🚫 No data guard
     if df is None:
         col1, col2 = st.columns([2, 1])
         with col1:
-            st.error("❌ No data available - Please upload and clean data first")
+            st.error("❌ No data available - Please upload data first")
         with col2:
             if st.button("📂 Go to Upload", use_container_width=True, type="primary"):
                 st.session_state.page = "Upload"
                 st.rerun()
-        return
+        st.stop()
 
     # ========== QUERY INPUT SECTION ==========
     st.markdown("### ❓ Your Question")

@@ -15,19 +15,8 @@ try:
     if not api_key:
         raise ValueError("GROQ_API_KEY not configured")
 
-    try:
-        # ✅ Primary initialization
-        client = Groq(
-            api_key=api_key,
-            timeout=30
-        )
-    except TypeError:
-        # ✅ Fallback for proxy issue (Streamlit Cloud fix)
-        import httpx
-        client = Groq(
-            api_key=api_key,
-            http_client=httpx.Client(timeout=30)
-        )
+    # ✅ Simple initialization without proxy or http_client overrides
+    client = Groq(api_key=api_key)
 
     logger.info("Groq client initialized successfully")
 

@@ -53,10 +53,13 @@ def get_clean_df():
     return SessionManager.get_clean_df()
 
 def get_safe_df():
+    """Get clean_df if available, otherwise df, otherwise None"""
     if st.session_state.get("clean_df") is not None:
         return st.session_state.clean_df
     
     if st.session_state.get("df") is not None:
         return st.session_state.df
+    
+    return None
     
     return None

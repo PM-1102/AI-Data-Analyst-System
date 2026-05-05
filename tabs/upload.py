@@ -75,6 +75,8 @@ def render():
                     st.session_state.clean_report = clean_report
                     st.session_state.file_uploaded = True
 
+                st.rerun()
+
                 # Success message
                 st.markdown("""
                 <div class="metric-card" style="background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.05)); border: 1px solid rgba(16,185,129,0.3);">

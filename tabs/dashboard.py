@@ -1,20 +1,17 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from utils.session import SessionManager
+from utils.session import SessionManager, get_safe_df
 
 
 def render():
     """Dashboard - Simple visualization interface"""
     
-    df = SessionManager.get_clean_df()
+    df = get_safe_df()
 
     if df is None:
-        st.error("❌ No data found!")
-        st.info("👉 **Step 1**: Go to 'Upload' tab and select your file")
-        st.info("👉 **Step 2**: Click 'Clean & Prepare Data' button")
-        st.info("👉 **Step 3**: Come back here to visualize")
-        return
+        st.error("❌ No data available - Please upload data first")
+        st.stop()
 
     # Header
     st.markdown("""

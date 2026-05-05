@@ -15,11 +15,12 @@ def render():
     st.divider()
 
     # Check if data is loaded and cleaned
-    if st.session_state.clean_df is None:
-        st.warning("⚠️ Please clean your data first (Upload tab → Clean & Prepare Data)")
-        return
-
-    df = st.session_state.clean_df
+    from utils.session import get_safe_df
+    df = get_safe_df()
+    
+    if df is None:
+        st.error("❌ No data available - Please upload data first")
+        st.stop()
 
     # ========== CLEANING SUMMARY ==========
     st.markdown("### ✅ Cleaning Summary")
