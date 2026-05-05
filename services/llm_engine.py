@@ -8,38 +8,59 @@ logger = setup_logger(__name__)
 
 client = None  # ✅ always define globally
 
-# Initialize Groq client safely
-try:
-    api_key = st.secrets.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
+# Initialize Groq client safely with detailed logging
+def initialize_groq_client():
+    """Initialize Groq client with comprehensive error handling"""
+    global client
+    
+    try:
+        # Get API key from secrets or environment
+        api_key = st.secrets.get("GROQ_API_KEY") if hasattr(st, 'secrets') else None
+        if not api_key:
+            api_key = os.getenv("GROQ_API_KEY")
+        
+        if not api_key:
+            logger.warning("GROQ_API_KEY not configured - AI features will be disabled")
+            return None
+        
+        # Initialize with minimal parameters only
+        client = Groq(api_key=api_key)
+        logger.info("✅ Groq client initialized successfully")
+        return client
+        
+    except TypeError as te:
+        logger.error(f"Groq initialization TypeError (likely invalid parameter): {str(te)}")
+        return None
+    except ValueError as ve:
+        logger.error(f"Groq initialization ValueError (likely API key issue): {str(ve)}")
+        return None
+    except Exception as e:
+        logger.error(f"Groq initialization failed: {type(e).__name__}: {str(e)}")
+        return None
 
-    if not api_key:
-        raise ValueError("GROQ_API_KEY not configured")
-
-    # ✅ Simple initialization without proxy or http_client overrides
-    client = Groq(api_key=api_key)
-
-    logger.info("Groq client initialized successfully")
-
-except Exception as e:
-    logger.error(f"Failed to initialize Groq client: {str(e)}")
-    client = None
+# Initialize on module load
+client = initialize_groq_client()
 
 
 def generate_ai_response(user_query, df_summary, filtered_data_preview):
     """
-    Generate AI response using Groq
+    Generate AI response using Groq with comprehensive error handling
     """
 
-    # ✅ FIXED indentation + safe fallback
+    # ✅ Check if client is available
     if not client:
+        logger.warning("Groq client not available - returning fallback response")
         return """Answer:
-AI service is currently unavailable.
+🔐 AI service requires API key configuration.
 
 Insight:
-The system could not connect to the AI engine.
+The system couldn't initialize the AI engine. This usually means:
+1. GROQ_API_KEY is not set in Streamlit secrets
+2. Or there was an initialization error
 
 Recommendation:
-Check API key configuration or try again later."""
+For Streamlit Cloud: Add GROQ_API_KEY to your Streamlit secrets.
+For local development: Set GROQ_API_KEY in your .env file."""
 
     prompt = f"""You are a strict Data Analyst. Your ONLY job is to analyze provided data.
 
@@ -80,25 +101,25 @@ Recommendation:
 """
 
     try:
+        logger.info(f"Sending query to Groq: {user_query[:50]}...")
         response = client.chat.completions.create(
             model=Config.LLM_MODEL,
             messages=[{"role": "user", "content": prompt}],
             temperature=Config.LLM_TEMPERATURE,
-            max_tokens=Config.LLM_MAX_TOKENS,
-            timeout=Config.LLM_TIMEOUT_SECONDS
+            max_tokens=Config.LLM_MAX_TOKENS
         )
 
-        logger.info(f"AI response generated for query: {user_query[:50]}...")
+        logger.info(f"✅ AI response generated successfully for query: {user_query[:50]}...")
         return response.choices[0].message.content
 
     except Exception as e:
-        logger.error(f"Error generating AI response: {str(e)}", exc_info=True)
+        logger.error(f"❌ Error generating AI response: {type(e).__name__}: {str(e)}", exc_info=True)
 
         return f"""Answer:
 Failed to generate AI response.
 
 Insight:
-An error occurred while processing your request.
+An error occurred: {type(e).__name__}
 
 Recommendation:
-Please try again or check logs. Error: {str(e)}"""
+Please try again. If problem persists, check API key and Groq service status."""
