@@ -26,3 +26,7 @@ maxUploadSize = 200
 [browser]
 gatherUsageStats = false
 serverAddress = "localhost"
+
+# ✅ ADD THIS (MOST IMPORTANT)
+[runner]
+pythonVersion = "3.10"
